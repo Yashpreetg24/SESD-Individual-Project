@@ -1,12 +1,25 @@
-Personal Diet Planner Web App
+# Personal Diet Planner Web App
 
-1- Full-stack web application for a single user to plan and track daily nutrition.
-2- Collects user profile data (age, height, weight, activity level, fitness goal).
-3- Calculates daily calorie and protein requirements automatically.
-4- Provides a food database to search and add meals.
-5 Allows logging of breakfast, lunch, dinner, and snacks.
-6- Tracks consumed vs remaining calories and protein in real time.
-7- Suggests foods based on remaining nutrition targets.
-8- Shows daily and weekly analytics through a dashboard.
-9- Backend focused using REST APIs, OOP principles, and clean layered architecture.
-10- Uses a relational database for storing users, foods, and meal logs.
+## Overview
+The Personal Diet Planner Web App is a full-stack application designed to help a single user plan and track daily nutrition. The system calculates calorie and protein requirements based on the user’s personal details and fitness goals, tracks daily food intake, and provides food suggestions to help meet nutritional targets.
+
+## Problem Statement
+Many individuals find it difficult to consistently track their diet and maintain balanced nutrition. Existing applications are often complex, paid, or overloaded with features. This project focuses on providing a simple, personal, and goal-oriented diet planning solution.
+
+## Scope
+The application is intended for a single authenticated user. It focuses on daily nutrition planning, food tracking, and progress analysis without multi-user or social features.
+
+## Key Features
+- User authentication and profile management  
+- Automatic calculation of daily calorie and protein goals  
+- Food database with nutritional information  
+- Daily meal logging (breakfast, lunch, dinner, snacks)  
+- Real-time tracking of consumed and remaining nutrition  
+- Smart food suggestions based on remaining targets  
+- Daily and weekly nutrition analytics  
+
+## Technical Focus
+The project emphasizes backend development using RESTful APIs, object-oriented programming principles, clean layered architecture, and relational database design.
+
+## Conclusion
+This project demonstrates practical application of system design and backend engineering concepts by combining nutrition-based business logic with clean software architecture.
