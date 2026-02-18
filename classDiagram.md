@@ -1,4 +1,6 @@
 ```mermaid
+classDiagram
+
 class User {
   +id: int
   +name: string
