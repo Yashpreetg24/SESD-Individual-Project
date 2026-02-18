@@ -1,4 +1,3 @@
-classDiagram
 ```mermaid
 class User {
   +id: int
