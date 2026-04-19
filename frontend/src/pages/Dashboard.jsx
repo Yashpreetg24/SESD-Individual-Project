@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../api';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/api/auth/profile', {
+      const res = await API.get('/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(res.data);
@@ -32,7 +32,7 @@ export default function Dashboard() {
 
   const fetchDailyLog = async () => {
     try {
-      const res = await axios.get('http://localhost:5001/api/meals/daily', {
+      const res = await API.get('/api/meals/daily', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(res.data.macros);
@@ -45,7 +45,7 @@ export default function Dashboard() {
   const getSuggestions = async () => {
     if(!stats) return;
     try {
-      const res = await axios.post('http://localhost:5001/api/meals/suggest', {
+      const res = await API.post('/api/meals/suggest', {
         remainingCalories: stats.remainingCalories,
         remainingProtein: stats.remainingProtein
       }, { headers: { Authorization: `Bearer ${token}` } });
@@ -59,7 +59,7 @@ export default function Dashboard() {
     e.preventDefault();
     if(!searchQuery) return;
     try {
-      const res = await axios.get(`http://localhost:5001/api/foods/search?query=${searchQuery}`, {
+      const res = await API.get(`/api/foods/search?query=${searchQuery}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSearchResults(res.data);
@@ -70,7 +70,7 @@ export default function Dashboard() {
 
   const logMeal = async (foodId, mealType) => {
     try {
-      await axios.post('http://localhost:5001/api/meals', {
+      await API.post('/api/meals', {
         food_id: foodId,
         meal_type: mealType,
         quantity: 1
@@ -85,7 +85,7 @@ export default function Dashboard() {
 
   const deleteMeal = async (id) => {
     try {
-      await axios.delete(`http://localhost:5001/api/meals/${id}`, {
+      await API.delete(`/api/meals/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchDailyLog(); // refresh stats
