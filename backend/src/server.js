@@ -13,16 +13,7 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  process.env.FRONTEND_URL, // e.g. https://sesd-individual-project-indol.vercel.app
-].filter(Boolean);
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);

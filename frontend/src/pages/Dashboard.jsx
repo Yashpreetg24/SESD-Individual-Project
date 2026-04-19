@@ -9,7 +9,8 @@ export default function Dashboard() {
   const [meals, setMeals] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  
+  const [error, setError] = useState(null);
+
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -27,6 +28,7 @@ export default function Dashboard() {
       setProfile(res.data);
     } catch (err) {
       if(err.response?.status === 401) handleLogout();
+      else setError(`Profile error: ${err.message} — API: ${import.meta.env.VITE_API_URL || 'localhost:5001'}`);
     }
   };
 
@@ -38,7 +40,7 @@ export default function Dashboard() {
       setStats(res.data.macros);
       setMeals(res.data.mealLogs);
     } catch (err) {
-      console.error(err);
+      setError(`Meals error: ${err.message} — API: ${import.meta.env.VITE_API_URL || 'localhost:5001'}`);
     }
   };
 
@@ -99,7 +101,8 @@ export default function Dashboard() {
     navigate('/login');
   };
 
-  if(!stats || !profile) return <div>Loading...</div>;
+  if(error) return <div style={{padding:'2rem',color:'red',fontFamily:'monospace',whiteSpace:'pre-wrap'}}><strong>Error:</strong> {error}</div>;
+  if(!stats || !profile) return <div style={{padding:'2rem'}}>Loading... (connecting to backend)</div>;
 
   return (
     <div className="container">
