@@ -1,36 +1,13 @@
-/**
- * User Model — Encapsulates user data with OOP
- */
-class User {
-  constructor({ id, name, email, password, age, height, weight, goal, gender, activity_level, created_at }) {
-    this.id = id;
-    this.name = name;
-    this.email = email;
-    this.password = password;
-    this.age = age;
-    this.height = height;
-    this.weight = weight;
-    this.goal = goal || 'maintenance';
-    this.gender = gender || 'male';
-    this.activityLevel = activity_level || 'moderate';
-    this.createdAt = created_at;
-  }
+const mongoose = require('mongoose');
 
-  /** Return safe public representation (no password) */
-  toJSON() {
-    return {
-      id: this.id,
-      name: this.name,
-      email: this.email,
-      age: this.age,
-      height: this.height,
-      weight: this.weight,
-      goal: this.goal,
-      gender: this.gender,
-      activityLevel: this.activityLevel,
-      createdAt: this.createdAt,
-    };
-  }
-}
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  age: { type: Number, required: true },
+  height: { type: Number, required: true }, // in cm
+  weight: { type: Number, required: true }, // in kg
+  goal: { type: String, enum: ['gain', 'lose', 'maintain'], required: true },
+}, { timestamps: true });
 
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);

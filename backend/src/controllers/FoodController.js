@@ -1,39 +1,33 @@
-const FoodService = require('../services/FoodService');
+const FoodRepository = require('../repositories/FoodRepository');
 
 class FoodController {
-  constructor() {
-    this.foodService    = new FoodService();
-    this.searchFoods    = this.searchFoods.bind(this);
-    this.getFoodById    = this.getFoodById.bind(this);
-    this.addCustomFood  = this.addCustomFood.bind(this);
+  async addFood(req, res) {
+    try {
+      const food = await FoodRepository.create(req.body);
+      res.status(201).json(food);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async getAllFoods(req, res) {
+    try {
+      const foods = await FoodRepository.findAll();
+      res.json(foods);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   }
 
   async searchFoods(req, res) {
     try {
-      const foods = await this.foodService.searchFoods(req.query.q, req.userId);
-      res.json(foods.map(f => f.toJSON()));
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-
-  async getFoodById(req, res) {
-    try {
-      const food = await this.foodService.getFoodById(parseInt(req.params.id));
-      res.json(food.toJSON());
-    } catch (err) {
-      res.status(404).json({ error: err.message });
-    }
-  }
-
-  async addCustomFood(req, res) {
-    try {
-      const food = await this.foodService.addCustomFood(req.body, req.userId);
-      res.status(201).json(food.toJSON());
-    } catch (err) {
-      res.status(400).json({ error: err.message });
+      const { query } = req.query;
+      const foods = await FoodRepository.searchByName(query || '');
+      res.json(foods);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
   }
 }
 
-module.exports = FoodController;
+module.exports = new FoodController();

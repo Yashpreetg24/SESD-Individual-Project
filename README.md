@@ -1,74 +1,66 @@
-# NutriTrack — Personal Diet Planner
+# Personal Diet Planner Web App
 
-A premium full-stack application designed to help users track their daily nutrition, calculate goals based on scientific formulas (Mifflin-St Jeor), and receive smart food suggestions.
+A modern, full-stack MERN (MongoDB, Express, React, Node.js) web application designed to help users establish and track their personal nutritional goals using smart algorithms.
 
-## 🚀 Features
+## Features
 
-- **Personalized Goal Calculation**: Automatically calculates BMR and TDEE based on age, weight, height, and activity level.
-- **Smart Diet Strategies**: Choose between Weight Loss, Maintenance, or Muscle Gain (Strategy Pattern).
-- **Food Diary**: Log meals (Breakfast, Lunch, Dinner, Snacks) with a massive pre-seeded database.
-- **Progress Analytics**: Visual trends and weekly progress reports using Recharts.
-- **Smart Suggestions**: AI-driven food suggestions based on your remaining nutritional targets for the day.
-- **Clean Architecture**: Built with a layered repository/service pattern for high maintainability.
+- **User Authentication:** Secure JWT-based Login and Registration.
+- **Nutrition Algorithm:** Dynamically calculates daily resting Basal Metabolic Rates (BMR) and protein targets based on age, weight, height, and personal goals.
+- **Smart Suggestions Engine:** Analyzes remaining daily macros and automatically searches the database for food items that strictly fit within the user's remaining limits.
+- **Meal Logging:** Search capabilities and specific logging modules for tracking daily Breakfast, Lunch, Dinner, and Snacks.
+- **Visual Dashboard:** Real-time tracking of calories and protein goals using clean, interactive status bars.
 
-## 🛠️ Tech Stack
+## Tech Stack
+- **Backend:** Node.js, Express.js, Mongoose (Clean Architecture implementation with Controllers, Services, and Repositories).
+- **Frontend:** React (Vite), React Router, Axios, and visually rich custom CSS.
+- **Database:** MongoDB.
 
-- **Frontend**: React, Vite, Axios, React Router, Recharts, CSS3 (Glassmorphism).
-- **Backend**: Node.js, Express, SQLite3 (Promisified), JWT Authentication.
-- **Patterns**: Singleton, Strategy, Repository, Factory.
-
-## 📂 Project Structure
-
-```text
-├── backend
-│   ├── config          # Database singleton configuration
-│   ├── controllers     # API request handlers
-│   ├── middleware      # JWT Authentication & Guardrails
-│   ├── models          # Domain entities (User, Food, MealLog)
-│   ├── repositories    # Data access layer (CRUD logic)
-│   ├── routes          # API endpoints definition
-│   ├── services        # Business logic & Calculations
-│   ├── src             # App structure
-│   └── server.js       # Entry point
-└── frontend
-    ├── src
-    │   ├── api         # Axios instance
-    │   ├── components  # Reusable UI components
-    │   ├── context     # Global Auth state
-    │   ├── pages       # Main view components
-    │   └── App.jsx     # Routing & Provider setup
-```
-
-## 🛠️ Installation & Setup
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- npm
+- Node.js (v18+)
+- Local MongoDB installation or a MongoDB Atlas connection URI string.
 
-### 1. Backend Setup
-```bash
-cd backend
-npm install
-npm start
-```
-*Note: Backend runs on http://localhost:7178 to avoid macOS port conflicts.*
+### Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set environment variables. Copy `.env.example` to a new `.env` file and verify connections:
+   ```bash
+   cp .env.example .env
+   ```
+4. Seed your local Database with initial foods (Run only once):
+   ```bash
+   node src/seed.js
+   ```
+5. Run the dev server:
+   ```bash
+   npm run dev
+   ```
 
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-*Note: Frontend runs on http://localhost:5173.*
+### Frontend Setup
+1. Open a new terminal and navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the frontend dev server:
+   ```bash
+   npm run dev
+   ```
+4. Access the web app at `http://localhost:3000/`.
 
-## 🧪 Documentation
+## Architecture Highlights
+- Clean Architecture enforces `Controllers -> Services -> Repositories -> Models`.
+- No third-party generalized AI dependencies – reliant entirely on controlled programmatic constraints and dataset fetching.
 
-The following UML diagrams and design documents are included in the repository root:
-- `idea.md`: Project scope and feature set.
-- `useCaseDiagram.md`: User interaction map.
-- `classDiagram.md`: Object-oriented structure.
-- `sequenceDiagram.md`: End-to-end data flow.
-- `ErDiagram.md`: Database schema relationship.
-
----
-**Developed for the SESD Individual Project — April 2024**
+## License
+MIT License

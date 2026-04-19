@@ -1,118 +1,210 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../api/axios';
-import CircularProgress from '../components/CircularProgress';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-const Dashboard = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function Dashboard() {
+  const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [meals, setMeals] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get('/suggestions');
-        setData(res.data);
-      } catch (err) {
-        console.error('Failed to fetch dashboard data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchProfile();
+    fetchDailyLog();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <div className="flex-center h-[80vh]"><div className="loader"></div></div>;
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get('http://localhost:5001/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProfile(res.data);
+    } catch (err) {
+      if(err.response?.status === 401) handleLogout();
+    }
+  };
 
-  const { remaining, suggestions } = data || {};
-  const goals = remaining?.goals || { calorieGoal: 2000, proteinGoal: 150 };
-  const consumed = remaining || { caloriesConsumed: 0, proteinConsumed: 0, carbsConsumed: 0, fatConsumed: 0 };
+  const fetchDailyLog = async () => {
+    try {
+      const res = await axios.get('http://localhost:5001/api/meals/daily', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setStats(res.data.macros);
+      setMeals(res.data.mealLogs);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getSuggestions = async () => {
+    if(!stats) return;
+    try {
+      const res = await axios.post('http://localhost:5001/api/meals/suggest', {
+        remainingCalories: stats.remainingCalories,
+        remainingProtein: stats.remainingProtein
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setSuggestions(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if(!searchQuery) return;
+    try {
+      const res = await axios.get(`http://localhost:5001/api/foods/search?query=${searchQuery}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSearchResults(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const logMeal = async (foodId, mealType) => {
+    try {
+      await axios.post('http://localhost:5001/api/meals', {
+        food_id: foodId,
+        meal_type: mealType,
+        quantity: 1
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      fetchDailyLog(); // refresh stats
+      setSearchQuery('');
+      setSearchResults([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteMeal = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5001/api/meals/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchDailyLog(); // refresh stats
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
+  if(!stats || !profile) return <div>Loading...</div>;
 
   return (
-    <div className="container py-8 animate-fade-in">
-      <header className="mb-10">
-        <h1 className="text-4xl font-extrabold tracking-tight">Today's Overview</h1>
-        <p className="text-text-muted mt-1">Keep track of your daily nutrition targets</p>
-      </header>
+    <div className="container">
+      <div className="flex" style={{justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem'}}>
+        <h1>Hi, {profile.name}!</h1>
+        <button className="btn btn-secondary" style={{width: 'auto'}} onClick={handleLogout}>Logout</button>
+      </div>
 
-      {/* Progress Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-        <div className="lg:col-span-2 glass-card flex flex-col md:flex-row items-center justify-around py-10 gap-8">
-          <CircularProgress 
-            value={consumed.caloriesConsumed} 
-            max={goals.calorieGoal} 
-            label="Calories" 
-            color="#4ade80" 
-          />
-          <CircularProgress 
-            value={consumed.proteinConsumed} 
-            max={goals.proteinGoal} 
-            label="Protein (g)" 
-            color="#6366f1" 
-          />
-          <div className="flex flex-col gap-4 text-center md:text-left">
-            <div>
-              <span className="text-3xl font-bold">{remaining?.calories || 0}</span>
-              <p className="text-xs text-text-muted uppercase font-bold tracking-widest">Kcal Remaining</p>
-            </div>
-            <div>
-              <span className="text-3xl font-bold">{remaining?.protein || 0}g</span>
-              <p className="text-xs text-text-muted uppercase font-bold tracking-widest">Protein Remaining</p>
-            </div>
+      <div className="stats-grid mb-4">
+        <div className="card stat-card">
+          <h3>Calories</h3>
+          <div className="stat-value">{Math.round(stats.consumedCalories)} / {Math.round(stats.targetCalories)}</div>
+          <p>kcals (Remaining: {Math.round(stats.remainingCalories)})</p>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{width: `${Math.min(100, (stats.consumedCalories/stats.targetCalories)*100)}%`}}></div>
           </div>
         </div>
-
-        <div className="glass-card flex flex-col justify-center">
-          <h3 className="text-lg font-bold mb-4">Macro breakdown</h3>
-          <div className="space-y-4">
-            <MacroItem label="Carbs" value={consumed.carbsConsumed} color="#f59e0b" />
-            <MacroItem label="Fat" value={consumed.fatConsumed} color="#ef4444" />
+        <div className="card stat-card">
+          <h3>Protein</h3>
+          <div className="stat-value">{Math.round(stats.consumedProtein)} / {Math.round(stats.targetProtein)}</div>
+          <p>grams (Remaining: {Math.round(stats.remainingProtein)})</p>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{width: `${Math.min(100, (stats.consumedProtein/stats.targetProtein)*100)}%`}}></div>
           </div>
-          <Link to="/meal-log" className="btn btn-primary w-full mt-8 no-underline">Log a Meal</Link>
         </div>
       </div>
 
-      {/* Suggestions */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Smart Suggestions</h2>
-          <p className="text-sm text-text-muted italic">Based on your remaining targets</p>
-        </div>
-        
-        {suggestions?.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {suggestions.map((food) => (
-              <div key={food.id} className="glass-card flex items-center justify-between group">
+      <div className="flex gap-4">
+        {/* Left Col */}
+        <div style={{flex: 1}}>
+          <div className="card">
+            <h3>Add a Meal</h3>
+            <form onSubmit={handleSearch} className="flex gap-4 mt-4">
+              <input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} placeholder="Search foods..." />
+              <button type="submit" className="btn" style={{width: 'auto'}}>+Add</button>
+            </form>
+            {searchResults.length > 0 && (
+              <div className="mt-4">
+                {searchResults.map(food => (
+                  <div key={food._id} className="flex" style={{justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border)'}}>
+                    <div>
+                      <strong>{food.name}</strong> - {food.calories}kcal, {food.protein}g protein
+                    </div>
+                    <div className="flex gap-4">
+                      <button className="btn btn-secondary" style={{padding: '0.2rem 0.5rem', width: 'auto'}} onClick={() => logMeal(food._id, 'breakfast')}>Brkfst</button>
+                      <button className="btn btn-secondary" style={{padding: '0.2rem 0.5rem', width: 'auto'}} onClick={() => logMeal(food._id, 'lunch')}>Lunch</button>
+                      <button className="btn btn-secondary" style={{padding: '0.2rem 0.5rem', width: 'auto'}} onClick={() => logMeal(food._id, 'dinner')}>Dinner</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <h3>Today's Meals</h3>
+            {meals.map(log => (
+              <div key={log._id} className="flex" style={{justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border)'}}>
                 <div>
-                  <h4 className="font-bold group-hover:text-primary transition-colors">{food.name}</h4>
-                  <p className="text-xs text-text-muted">{food.calories} kcal • {food.protein}g protein</p>
+                  <strong>{log.food_id?.name || 'Unknown food'}</strong> - {log.meal_type}
                 </div>
-                <Link to={`/food-search?q=${food.name}`} className="w-8 h-8 rounded-full bg-slate-800 flex-center hover:bg-primary hover:text-[#064e3b] transition-all no-underline">+</Link>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{padding: '0.2rem 0.6rem', width: 'auto', color: '#ef4444', borderColor: '#ef4444'}} 
+                  onClick={() => deleteMeal(log._id)}
+                >
+                  -
+                </button>
               </div>
             ))}
+            {meals.length === 0 && <p className="text-muted mt-4">No meals logged yet.</p>}
           </div>
-        ) : (
-          <div className="glass-card text-center py-12">
-            <p className="text-text-muted">You've reached your goals! No suggestions needed.</p>
+        </div>
+
+        {/* Right Col */}
+        <div style={{flex: 1}}>
+          <div className="card">
+            <div className="flex" style={{justifyContent: 'space-between'}}>
+              <h3>Smart Suggestions</h3>
+              <button className="btn btn-secondary" style={{width: 'auto', padding: '0.3rem 0.6rem'}} onClick={getSuggestions}>Get Suggestions</button>
+            </div>
+            {suggestions.length > 0 ? (
+              <div className="mt-4">
+                {suggestions.map((food) => (
+                  <div key={food._id} className="flex" style={{justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border)'}}>
+                    <div>
+                      <strong>{food.name}</strong> ({food.calories}kcal | {food.protein}g protein)
+                    </div>
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{padding: '0.2rem 0.6rem', width: 'auto', color: 'var(--primary)', borderColor: 'var(--primary)'}} 
+                      onClick={() => logMeal(food._id, 'snack')}
+                      title="Add as snack"
+                    >
+                      +
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+                <p className="text-muted mt-4">Click to find foods that fit your remaining macros!</p>
+            )}
           </div>
-        )}
-      </section>
+        </div>
+      </div>
     </div>
   );
-};
-
-const MacroItem = ({ label, value, color }) => (
-  <div>
-    <div className="flex justify-between text-sm mb-1">
-      <span className="text-text-muted font-medium">{label}</span>
-      <span className="font-bold">{value}g</span>
-    </div>
-    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-      <div 
-        className="h-full rounded-full transition-all duration-1000" 
-        style={{ width: `${Math.min(100, (value / 100) * 100)}%`, backgroundColor: color }}
-      ></div>
-    </div>
-  </div>
-);
-
-export default Dashboard;
+}

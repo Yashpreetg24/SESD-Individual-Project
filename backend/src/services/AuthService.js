@@ -1,48 +1,51 @@
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const jwt    = require('jsonwebtoken');
 const UserRepository = require('../repositories/UserRepository');
-const db = require('../config/database');
 
 class AuthService {
-  constructor() {
-    this.userRepository = new UserRepository(db);
-  }
+  async register(userData) {
+    const { name, email, password, age, height, weight, goal } = userData;
+    
+    let user = await UserRepository.findByEmail(email);
+    if (user) {
+      throw new Error('User already exists');
+    }
 
-  async register({ name, email, password, age, height, weight, goal, gender, activityLevel }) {
-    const existing = this.userRepository.findByEmail(email);
-    if (existing) throw new Error('Email is already registered');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const user = this.userRepository.create({
+    user = await UserRepository.create({
       name,
       email,
       password: hashedPassword,
-      age:            age            || null,
-      height:         height         || null,
-      weight:         weight         || null,
-      goal:           goal           || 'maintenance',
-      gender:         gender         || 'male',
-      activity_level: activityLevel  || 'moderate',
+      age,
+      height,
+      weight,
+      goal,
     });
 
-    const token = this._generateToken(user.id);
-    return { user: user.toJSON(), token };
+    return this.generateToken(user._id);
   }
 
-  async login({ email, password }) {
-    const user = this.userRepository.findByEmail(email);
-    if (!user) throw new Error('Invalid email or password');
+  async login(email, password) {
+    const user = await UserRepository.findByEmail(email);
+    if (!user) {
+      throw new Error('Invalid credentials');
+    }
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new Error('Invalid email or password');
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('Invalid credentials');
+    }
 
-    const token = this._generateToken(user.id);
-    return { user: user.toJSON(), token };
+    return { token: this.generateToken(user._id), userId: user._id };
   }
 
-  _generateToken(userId) {
-    return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  generateToken(id) {
+    return jwt.sign({ id }, process.env.JWT_SECRET || 'fallback_secret', {
+      expiresIn: '30d',
+    });
   }
 }
 
-module.exports = AuthService;
+module.exports = new AuthService();

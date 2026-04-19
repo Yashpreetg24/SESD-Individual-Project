@@ -1,76 +1,42 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
-const Login = () => {
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const res = await axios.post('http://localhost:5001/api/auth/login', { email, password });
+      localStorage.setItem('token', res.data.token);
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to login');
-    } finally {
-      setLoading(false);
+      alert(err.response?.data?.message || 'Login failed');
     }
   };
 
   return (
-    <div className="flex-center min-h-screen bg-bg-dark px-4">
-      <div className="glass p-8 rounded-2xl w-full max-w-md animate-fade-in">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex-center mx-auto mb-4 rotate-12">
-            <span className="text-[#064e3b] text-3xl font-bold">N</span>
-          </div>
-          <h1 className="text-3xl font-bold gradient-text">Welcome Back</h1>
-          <p className="text-text-muted mt-2">Log in to track your progress</p>
-        </div>
-
-        {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm mb-6">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
+    <div className="container" style={{ maxWidth: '500px', marginTop: '10vh' }}>
+      <div className="card">
+        <h2 className="text-center mb-4">Login to Diet Planner</h2>
+        <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <label>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <label>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
-          <button type="submit" className="btn btn-primary w-full mt-4" disabled={loading}>
-            {loading ? 'Logging in...' : 'Sign In'}
-          </button>
+          <button type="submit" className="btn mt-4">Login</button>
         </form>
-
-        <p className="text-center text-text-muted mt-8 text-sm">
-          Don't have an account? <Link to="/register" className="text-primary font-semibold no-underline ml-1">Join NutriTrack</Link>
+        <p className="text-center mt-4 text-muted">
+          Don't have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
